@@ -1,4 +1,7 @@
-package hr.fer.zemris.java.hw07.jnotepadpp;
+package hr.fer.zemris.java.hw08.jnotepadpp;
+
+import hr.fer.zemris.java.hw08.jnotepadpp.localization.ILocalizationListener;
+import hr.fer.zemris.java.hw08.jnotepadpp.localization.ILocalizationProvider;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
@@ -6,11 +9,10 @@ import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Image;
 import java.awt.event.ActionEvent;
-import java.io.File;
 import java.io.IOException;
+import java.net.URL;
 
 import javax.imageio.ImageIO;
-import javax.swing.AbstractAction;
 import javax.swing.JButton;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -24,12 +26,17 @@ import javax.swing.JTabbedPane;
 public class ModifiedTabbedPane extends JTabbedPane {
 
 	private static final long serialVersionUID = 6450737211342077841L;
+	
+	/** Localization provider. */
+	private ILocalizationProvider provider;
 
 	/**
-	 * Constructor. Calls super constructor.
+	 * Constructor.
+	 * @param provider localization provider
 	 */
-	public ModifiedTabbedPane() {
+	public ModifiedTabbedPane(ILocalizationProvider provider) {
 		super();
+		this.provider = provider;
 	}
 
 	/**
@@ -60,18 +67,23 @@ public class ModifiedTabbedPane extends JTabbedPane {
 
 			add(component.getTabLabel(), BorderLayout.CENTER);
 
-			ImageButton closeButton = new ImageButton("res/Close.png");
-			closeButton.setAction(new AbstractAction("Close") {
+			final ImageButton closeButton = new ImageButton(getClass().getResource("res/Close.png"));
+			closeButton.setAction(new LocalizableAction("close", provider) {
 				private static final long serialVersionUID = 1L;
 
 				@Override
 				public void actionPerformed(ActionEvent e) {
 					if (component.isChanged()) {
 						final String name = component.getTabLabel().getText().substring(1);
-						int option = JOptionPane
-								.showOptionDialog(getTopLevelAncestor(), "Would you like to save document "
-										+ name + "?", "File Not Saved", JOptionPane.YES_NO_CANCEL_OPTION,
-										JOptionPane.QUESTION_MESSAGE, null, null, 2);
+						int option = JOptionPane.showOptionDialog(
+								getTopLevelAncestor(),
+								provider.getString("saveQuestion") + " " + name + "?",
+								provider.getString("notSaved"),
+								JOptionPane.YES_NO_CANCEL_OPTION,
+								JOptionPane.QUESTION_MESSAGE,
+								null,
+								null,
+								2);
 
 						if (option == 0) {		//YES
 							((JnotepadPP) getTopLevelAncestor()).saveAction();
@@ -85,7 +97,14 @@ public class ModifiedTabbedPane extends JTabbedPane {
 				}
 			});
 
-			closeButton.setToolTipText("Close tab");
+			provider.addLocalizationListener(new ILocalizationListener() {
+				
+				@Override
+				public void localizationChanged() {
+					closeButton.setToolTipText(provider.getString("closeTab"));
+				}
+			});
+			closeButton.setToolTipText(provider.getString("closeTab"));
 			closeButton.setOpaque(false);
 			add(closeButton, BorderLayout.EAST);
 		}
@@ -108,11 +127,10 @@ public class ModifiedTabbedPane extends JTabbedPane {
 		 * Constructs button from image.
 		 * @param imagePath path to image
 		 */
-		public ImageButton(String imagePath) {
+		public ImageButton(URL imagePath) {
 			super();
 			try {
-				//img = ImageIO.read(this.getClass().getResource("/Close.png"));
-				img = ImageIO.read(new File("res/Close.png"));
+				img = ImageIO.read(imagePath);
 			} catch (IOException e) {
 				//do nothing
 			}

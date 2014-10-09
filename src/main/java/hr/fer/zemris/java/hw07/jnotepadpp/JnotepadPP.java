@@ -1,4 +1,8 @@
-package hr.fer.zemris.java.hw07.jnotepadpp;
+package hr.fer.zemris.java.hw08.jnotepadpp;
+
+import hr.fer.zemris.java.hw08.jnotepadpp.localization.FormLocalizationProvider;
+import hr.fer.zemris.java.hw08.jnotepadpp.localization.ILocalizationListener;
+import hr.fer.zemris.java.hw08.jnotepadpp.localization.LocalizationProvider;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
@@ -12,7 +16,6 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.ImageIcon;
 import javax.swing.JFileChooser;
@@ -46,6 +49,9 @@ public class JnotepadPP extends JFrame {
 	/** Extended from <code>JTabbedPane</code>. Holds all tabs. */
 	private ModifiedTabbedPane tabs;
 
+	/** Reference to localization provider. */
+	private FormLocalizationProvider flp;
+
 	//GUI constants
 	private static final int INIT_SIZE_X = 520;
 	private static final int INIT_SIZE_Y = 600;
@@ -59,12 +65,13 @@ public class JnotepadPP extends JFrame {
 	public JnotepadPP() {
 		super();
 		setTitle("JNotepad++");
-		//setIconImage(new ImageIcon(this.getClass().getResource("/Notepad.png")).getImage());
-		setIconImage(new ImageIcon("res/Notepad.png").getImage());
+		setIconImage(new ImageIcon(this.getClass().getResource("res/Notepad.png")).getImage());
 		setLocation(INIT_POS_X, INIT_POS_Y);
 		setSize(INIT_SIZE_X, INIT_SIZE_Y);
 		setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
 		setLayout(new BorderLayout());
+
+		flp = new FormLocalizationProvider(LocalizationProvider.getInstance(), this);
 
 		initGUI();
 	}
@@ -79,15 +86,42 @@ public class JnotepadPP extends JFrame {
 	 * @see #initTabbedPane()
 	 * @see #initWindowEvent()
 	 * @see #initTabChangeListener()
+	 * @see #initDialogLanguage()
 	 */
 	private void initGUI() {
 		initLookAndFeel();
 		actionInit();
 		initMenuBar();
+		initLocalizationListener();
 		initToolBar();
 		initTabbedPane();
 		initWindowEvent();
 		initTabChangeListener();
+	}
+
+	/**
+	 * Initializes language of option dialogs. Initializes some, not all components.
+	 * Initializes localization listener.
+	 * @see #updateDialogLanguage()
+	 */
+	private void initLocalizationListener() {
+		flp.addLocalizationListener(new ILocalizationListener() {
+			
+			@Override
+			public void localizationChanged() {
+				updateDialogLanguage();
+			}
+		});
+		updateDialogLanguage();
+	}
+
+	/**
+	 * Updates dialog language.
+	 */
+	private void updateDialogLanguage() {
+		UIManager.put("OptionPane.yesButtonText", flp.getString("yes"));
+		UIManager.put("OptionPane.noButtonText", flp.getString("no"));
+		UIManager.put("OptionPane.cancelButtonText", flp.getString("cancel"));
 	}
 
 	/**
@@ -116,7 +150,7 @@ public class JnotepadPP extends JFrame {
 		JMenuBar menu = new JMenuBar();
 		this.setJMenuBar(menu);
 
-		JMenu fileOperations = new JMenu("File");
+		JMenu fileOperations = new LJMenu("file", flp);
 		menu.add(fileOperations);
 		fileOperations.add(new JMenuItem(actionMap.get("blank")));
 		fileOperations.add(new JMenuItem(actionMap.get("open")));
@@ -125,13 +159,32 @@ public class JnotepadPP extends JFrame {
 		fileOperations.add(new JSeparator());
 		fileOperations.add(new JMenuItem(actionMap.get("exit")));
 
-		JMenu textOperations = new JMenu("Edit");
+		JMenu textOperations = new LJMenu("edit", flp);
 		menu.add(textOperations);
 		textOperations.add(new JMenuItem(actionMap.get("cut")));
 		textOperations.add(new JMenuItem(actionMap.get("copy")));
 		textOperations.add(new JMenuItem(actionMap.get("paste")));
 		textOperations.add(new JSeparator());
 		textOperations.add(new JMenuItem(actionMap.get("stats")));
+
+		JMenu languagesChooser = new LJMenu("lang", flp);
+		menu.add(languagesChooser);
+		languagesChooser.add(new JMenuItem(new LocalizableAction("croatian", flp) {
+			private static final long serialVersionUID = -226053105959290280L;
+
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				LocalizationProvider.getInstance().setLanguage("hr");
+			}
+		}));
+		languagesChooser.add(new JMenuItem(new LocalizableAction("english", flp) {
+			private static final long serialVersionUID = 2062164732722174194L;
+
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				LocalizationProvider.getInstance().setLanguage("en");
+			}
+		}));
 	}
 
 	/**
@@ -145,30 +198,57 @@ public class JnotepadPP extends JFrame {
 		toolBar.setFloatable(false);
 		add(toolBar, BorderLayout.NORTH);
 
-		//Class<? extends JnotepadPP> jnCl = this.getClass();		//JnotepadPP Class
+		Class<? extends JnotepadPP> jnCl = this.getClass();		//JnotepadPP Class
 
-		toolBar.add(new ToolbarButton(new ImageIcon("res/Blank.png"), actionMap.get("blank")));
-		toolBar.add(new ToolbarButton(new ImageIcon("res/Open.png"), actionMap.get("open")));
-		toolBar.add(new ToolbarButton(new ImageIcon("res/Save.png"), actionMap.get("save")));
-		toolBar.add(new ToolbarButton(new ImageIcon("res/SaveAs.png"), actionMap.get("saveas")));
+		toolBar.add(new ToolbarButton(
+				new ImageIcon(jnCl.getResource("res/Blank.png")),
+				actionMap.get("blank"),
+				flp));
+		toolBar.add(new ToolbarButton(
+				new ImageIcon(jnCl.getResource("res/Open.png")),
+				actionMap.get("open"),
+				flp));
+		toolBar.add(new ToolbarButton(
+				new ImageIcon(jnCl.getResource("res/Save.png")),
+				actionMap.get("save"),
+				flp));
+		toolBar.add(new ToolbarButton(
+				new ImageIcon(jnCl.getResource("res/SaveAs.png")),
+				actionMap.get("saveas"),
+				flp));
 		toolBar.addSeparator();
 
-		toolBar.add(new ToolbarButton(new ImageIcon("res/Cut.png"), actionMap.get("cut")));
-		toolBar.add(new ToolbarButton(new ImageIcon("res/Copy.png"), actionMap.get("copy")));
-		toolBar.add(new ToolbarButton(new ImageIcon("res/Paste.png"), actionMap.get("paste")));
+		toolBar.add(new ToolbarButton(
+				new ImageIcon(jnCl.getResource("res/Cut.png")),
+				actionMap.get("cut"),
+				flp));
+		toolBar.add(new ToolbarButton(
+				new ImageIcon(jnCl.getResource("res/Copy.png")),
+				actionMap.get("copy"),
+				flp));
+		toolBar.add(new ToolbarButton(
+				new ImageIcon(jnCl.getResource("res/Paste.png")),
+				actionMap.get("paste"),
+				flp));
 		toolBar.addSeparator();
 
-		toolBar.add(new ToolbarButton(new ImageIcon("res/Stats.png"), actionMap.get("stats")));
+		toolBar.add(new ToolbarButton(
+				new ImageIcon(jnCl.getResource("res/Stats.png")),
+				actionMap.get("stats"),
+				flp));
 		toolBar.addSeparator();
 
-		toolBar.add(new ToolbarButton(new ImageIcon("res/Exit.png"), actionMap.get("exit")));
+		toolBar.add(new ToolbarButton(
+				new ImageIcon(jnCl.getResource("res/Exit.png")),
+				actionMap.get("exit"),
+				flp));
 	}
 
 	/**
 	 * Initializes tabbed pane. Makes background the same color as everything else.
 	 */
 	private void initTabbedPane() {
-		tabs = new ModifiedTabbedPane();
+		tabs = new ModifiedTabbedPane(flp);
 		tabs.setOpaque(true);
 		add(tabs, BorderLayout.CENTER);
 	}
@@ -208,43 +288,42 @@ public class JnotepadPP extends JFrame {
 	 * Initializes all required actions. Action are: New Blank Document, Open File,
 	 * Save File, Save File As, Cut, Copy, Paste, Statistics, Exit. Method also
 	 * defines short descriptions and key bindings for each action.
+	 * @see #updateActionDesc()
 	 */
 	private void actionInit() {
 
 		// Action for creating new blank document
-		Action action = new AbstractAction("New Blank Document") {
+		Action action = new LocalizableAction("blank", flp) {
 			private static final long serialVersionUID = -226053105959290280L;
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				tabs.add(new TabComponent(null));
+				tabs.add(new TabComponent(null, flp));
 				tabs.setSelectedIndex(tabs.getTabCount() - 1);
 			}
 		};
-		action.putValue(Action.SHORT_DESCRIPTION, "Create new blank document.");
 		action.putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_N, CTRL_DOWN_MASK, true));
 		actionMap.put("blank", action);
 
 		// Action for opening existing files
-		action = new AbstractAction("Open File...") {
+		action = new LocalizableAction("open", flp) {
 			private static final long serialVersionUID = 2062164732722174194L;
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				File file = fileOpenAction(true);	//true is flag for opening
 				if (file != null) {
-					tabs.add(new TabComponent(file));
+					tabs.add(new TabComponent(file, flp));
 					tabs.setSelectedIndex(tabs.getTabCount() - 1);
 					changeTitle();
 				}
 			}
 		};
-		action.putValue(Action.SHORT_DESCRIPTION, "Open existing file.");
 		action.putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_O, CTRL_DOWN_MASK, true));
 		actionMap.put("open", action);
 
 		// Action for saving existing file
-		action = new AbstractAction("Save File") {
+		action = new LocalizableAction("save", flp) {
 			private static final long serialVersionUID = -1007710883041538399L;
 
 			@Override
@@ -252,12 +331,11 @@ public class JnotepadPP extends JFrame {
 				saveAction();
 			}
 		};
-		action.putValue(Action.SHORT_DESCRIPTION, "Save file");
 		action.putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_S, CTRL_DOWN_MASK, true));
 		actionMap.put("save", action);
 
 		// Action for save as, for existing file
-		action = new AbstractAction("Save File As...") {
+		action = new LocalizableAction("saveas", flp) {
 			private static final long serialVersionUID = -5549917973146258863L;
 
 			@Override
@@ -265,12 +343,11 @@ public class JnotepadPP extends JFrame {
 				saveAsAction();
 			}
 		};
-		action.putValue(Action.SHORT_DESCRIPTION, "Save file as...");
 		action.putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke("ctrl shift S"));
 		actionMap.put("saveas", action);
 
 		// Action for cutting text
-		action = new AbstractAction("Cut") {
+		action = new LocalizableAction("cut", flp) {
 			private static final long serialVersionUID = -3255431990098608569L;
 
 			@Override
@@ -281,12 +358,11 @@ public class JnotepadPP extends JFrame {
 				}
 			}
 		};
-		action.putValue(Action.SHORT_DESCRIPTION, "Cut selected text.");
 		action.putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_X, CTRL_DOWN_MASK, true));
 		actionMap.put("cut", action);
 
 		// Action for copying text
-		action = new AbstractAction("Copy") {
+		action = new LocalizableAction("copy", flp) {
 			private static final long serialVersionUID = -3255431990098608569L;
 
 			@Override
@@ -297,12 +373,11 @@ public class JnotepadPP extends JFrame {
 				}
 			}
 		};
-		action.putValue(Action.SHORT_DESCRIPTION, "Copy selected text.");
 		action.putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_C, CTRL_DOWN_MASK, true));
 		actionMap.put("copy", action);
 
 		// Action for pasting text
-		action = new AbstractAction("Paste") {
+		action = new LocalizableAction("paste", flp) {
 			private static final long serialVersionUID = -3255431990098608569L;
 
 			@Override
@@ -313,33 +388,37 @@ public class JnotepadPP extends JFrame {
 				}
 			}
 		};
-		action.putValue(Action.SHORT_DESCRIPTION, "Paste text from clipboard.");
 		action.putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_V, CTRL_DOWN_MASK));
 		actionMap.put("paste", action);
 
 		// Action for getting statistics
-		action = new AbstractAction("Statistics") {
+		action = new LocalizableAction("stats", flp) {
 			private static final long serialVersionUID = 1934192466083401633L;
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				TabComponent tab = (TabComponent) tabs.getSelectedComponent();
 				if (tab == null) {
-					JOptionPane.showMessageDialog(JnotepadPP.this, "There are no tabs.", "Statistics",
+					JOptionPane.showMessageDialog(
+							JnotepadPP.this,
+							flp.getString("noTabs"),
+							flp.getString("stats"),
 							JOptionPane.INFORMATION_MESSAGE);
 					return;
 				}
 				String statistics = tab.getStatistics();
-				JOptionPane.showMessageDialog(JnotepadPP.this, statistics, "Statistics",
+				JOptionPane.showMessageDialog(
+						JnotepadPP.this,
+						statistics,
+						flp.getString("stats"),
 						JOptionPane.INFORMATION_MESSAGE);
 			}
 		};
-		action.putValue(Action.SHORT_DESCRIPTION, "Calculate statistics.");
 		action.putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_T, CTRL_DOWN_MASK, true));
 		actionMap.put("stats", action);
 
 		// Action for exiting application
-		action = new AbstractAction("Exit") {
+		action = new LocalizableAction("exit", flp) {
 			private static final long serialVersionUID = 7203980126285743479L;
 
 			@Override
@@ -347,9 +426,33 @@ public class JnotepadPP extends JFrame {
 				exitAction();
 			}
 		};
-		action.putValue(Action.SHORT_DESCRIPTION, "Exit application.");
 		action.putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_E, CTRL_DOWN_MASK, true));
 		actionMap.put("exit", action);
+
+		// updating short descrptions
+		flp.addLocalizationListener(new ILocalizationListener() {
+
+			@Override
+			public void localizationChanged() {
+				updateActionDesc();
+			}
+		});
+		updateActionDesc();
+	}
+
+	/**
+	 * Updates action short descriptions.
+	 */
+	private void updateActionDesc() {
+		actionMap.get("blank").putValue(Action.SHORT_DESCRIPTION, flp.getString("blankDescription"));
+		actionMap.get("open").putValue(Action.SHORT_DESCRIPTION, flp.getString("openDescription"));
+		actionMap.get("save").putValue(Action.SHORT_DESCRIPTION, flp.getString("saveDescription"));
+		actionMap.get("saveas").putValue(Action.SHORT_DESCRIPTION, flp.getString("saveasDescription"));
+		actionMap.get("cut").putValue(Action.SHORT_DESCRIPTION, flp.getString("cutDescription"));
+		actionMap.get("copy").putValue(Action.SHORT_DESCRIPTION, flp.getString("copyDescription"));
+		actionMap.get("paste").putValue(Action.SHORT_DESCRIPTION, flp.getString("pasteDescription"));
+		actionMap.get("stats").putValue(Action.SHORT_DESCRIPTION, flp.getString("statsDescription"));
+		actionMap.get("exit").putValue(Action.SHORT_DESCRIPTION, flp.getString("exitDescription"));
 	}
 
 	/**
@@ -396,7 +499,10 @@ public class JnotepadPP extends JFrame {
 			try {
 				file.createNewFile();	//if exists won't do anything
 			} catch (IOException e) {
-				JOptionPane.showMessageDialog(this, "Error while creating new file.", "Error",
+				JOptionPane.showMessageDialog(
+						this,
+						flp.getString("createNewFileError"),
+						flp.getString("error"),
 						JOptionPane.ERROR_MESSAGE);
 				return;
 			}
@@ -423,9 +529,15 @@ public class JnotepadPP extends JFrame {
 			tabs.setSelectedComponent(comp);
 
 			if (dirty) {	//should i even ask?
-				int option = JOptionPane.showOptionDialog(JnotepadPP.this, "Would you like to save document "
-						+ name + "?", "File not saved", JOptionPane.YES_NO_CANCEL_OPTION,
-						JOptionPane.QUESTION_MESSAGE, null, null, 2);
+				int option = JOptionPane.showOptionDialog(
+						JnotepadPP.this,
+						flp.getString("saveQuestion") + " " + name + "?",
+						flp.getString("notSaved"),
+						JOptionPane.YES_NO_CANCEL_OPTION,
+						JOptionPane.QUESTION_MESSAGE,
+						null,
+						null,
+						2);
 
 				if (option == 0) {		//YES
 					saveAction();
@@ -448,16 +560,17 @@ public class JnotepadPP extends JFrame {
 	 * @return opened/saved file, <code>null</code> if cancel was pressed
 	 */
 	private File fileOpenAction(boolean open) {
+		UIManager.put("FileChooser.cancelButtonText", flp.getString("cancel"));
 		JFileChooser chooser = new JFileChooser();
 		if (!open) {
-			chooser.setApproveButtonText("Save");
-			chooser.setDialogTitle("Save");
+			chooser.setApproveButtonText(flp.getString("buttonSave"));
+			chooser.setDialogTitle(flp.getString("buttonSave"));
 		} else {
-			chooser.setApproveButtonText("Open");
-			chooser.setDialogTitle("Open");
+			chooser.setApproveButtonText(flp.getString("buttonOpen"));
+			chooser.setDialogTitle(flp.getString("buttonOpen"));
 		}
 
-		FileNameExtensionFilter filter = new FileNameExtensionFilter("TXT files", "txt");
+		FileNameExtensionFilter filter = new FileNameExtensionFilter("TXT", "txt");
 		chooser.addChoosableFileFilter(filter);
 
 		int returnVal = chooser.showOpenDialog(this);
@@ -475,9 +588,15 @@ public class JnotepadPP extends JFrame {
 	 *         clicked or dialog was closed
 	 */
 	private boolean overwrite(String name) {
-		int option = JOptionPane.showOptionDialog(this,
-				"File already exists! Would you like to overwrite file \"" + name + "\" ?", "File overwrite",
-				JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE, null, null, null);
+		int option = JOptionPane.showOptionDialog(
+				this,
+				flp.getString("overwriteQuestion") + " \"" + name + "\" ?",
+				flp.getString("fileOverwrite"),
+				JOptionPane.YES_NO_OPTION,
+				JOptionPane.QUESTION_MESSAGE,
+				null,
+				null,
+				null);
 		if (option == 0) {
 			return true;
 		}

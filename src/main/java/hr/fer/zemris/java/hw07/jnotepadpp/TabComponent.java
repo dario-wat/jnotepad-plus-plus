@@ -1,4 +1,6 @@
-package hr.fer.zemris.java.hw07.jnotepadpp;
+package hr.fer.zemris.java.hw08.jnotepadpp;
+
+import hr.fer.zemris.java.hw08.jnotepadpp.localization.ILocalizationProvider;
 
 import java.awt.BorderLayout;
 import java.awt.Font;
@@ -52,19 +54,25 @@ public class TabComponent extends JPanel implements DocumentListener {
 	/** Label for tab title. Contains file name. */
 	private JLabel title = new JLabel();
 
+	/** Localization provider. */
+	private ILocalizationProvider provider;
+
 	/**
 	 * Constructor with one argument. If tab has no file (it is blank/new) then file
 	 * is <code>null</code>.
 	 * @param file file that is opened inside of tab
+	 * @param provider localization provider
 	 */
-	public TabComponent(File file) {
+	public TabComponent(File file, ILocalizationProvider provider) {
 		super(new BorderLayout());
 		this.file = file;
+		this.provider = provider;
 
 		//initial text area, main title and tab title contents
 		if (file == null) {		//blank/new
 			textArea = new JTextArea();
-			title.setText("new_document_" + docCount++);
+			title.setText(provider.getString("newDocumentTag") + docCount);
+			incDocCount();
 			mainTitle = title.getText();
 		} else {				//existing
 			textArea = new JTextArea(readFile());
@@ -87,12 +95,20 @@ public class TabComponent extends JPanel implements DocumentListener {
 	}
 
 	/**
+	 * Increases doc count. To avoid findbugs bullshit.
+	 */
+	private static void incDocCount() {
+		docCount++;
+	}
+
+	/**
 	 * Helper method that reads file content into string.
 	 * @return string
 	 */
 	private String readFile() {
 		StringBuilder builder = new StringBuilder();
-		try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file),
+		try (BufferedReader reader = new BufferedReader(new InputStreamReader(
+				new FileInputStream(file),
 				StandardCharsets.UTF_8))) {
 
 			final int buffSize = 4096;
@@ -102,7 +118,10 @@ public class TabComponent extends JPanel implements DocumentListener {
 				builder.append(buffer, 0, len);
 			}
 		} catch (IOException e) {
-			showMessageDialog(getTopLevelAncestor(), "Error while reading file content.", "Error",
+			showMessageDialog(
+					getTopLevelAncestor(),
+					provider.getString("readingFileContentError"),
+					provider.getString("error"),
 					JOptionPane.ERROR_MESSAGE);
 		}
 		return builder.toString();
@@ -115,12 +134,16 @@ public class TabComponent extends JPanel implements DocumentListener {
 	void saveFile() {
 		if (dirty) {
 			try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(
-					new FileOutputStream(file), StandardCharsets.UTF_8))) {
+					new FileOutputStream(file),
+					StandardCharsets.UTF_8))) {
 
 				writer.write(textArea.getText());
 			} catch (IOException ignorable) {
-				showMessageDialog(getTopLevelAncestor(), "Error while writing content to file.",
-						"Error writing", JOptionPane.ERROR_MESSAGE);
+				showMessageDialog(
+						getTopLevelAncestor(),
+						provider.getString("writingFileContentError"),
+						provider.getString("error"),
+						JOptionPane.ERROR_MESSAGE);
 			}
 
 			dirty = false;
@@ -135,12 +158,16 @@ public class TabComponent extends JPanel implements DocumentListener {
 	 * @param file file
 	 */
 	void saveFile(File file) {
-		try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file),
+		try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(
+				new FileOutputStream(file),
 				StandardCharsets.UTF_8))) {
 
 			writer.write(textArea.getText());
 		} catch (IOException ignorable) {
-			showMessageDialog(getTopLevelAncestor(), "Error while writing content to file.", "Error writing",
+			showMessageDialog(
+					getTopLevelAncestor(),
+					provider.getString("writingFileContentError"),
+					provider.getString("error"),
 					JOptionPane.ERROR_MESSAGE);
 		}
 
@@ -171,8 +198,7 @@ public class TabComponent extends JPanel implements DocumentListener {
 			}
 		}
 
-		return "Your document has " + allChars + " characters, " + noWhitespace
-				+ " non-blank characters and " + rowCount + " lines.";
+		return String.format(provider.getString("statsStringFormat"), allChars, noWhitespace, rowCount);
 	}
 
 	/**
