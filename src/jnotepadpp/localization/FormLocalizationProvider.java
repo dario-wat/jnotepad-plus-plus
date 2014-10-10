@@ -1,4 +1,4 @@
-package hr.fer.zemris.java.hw08.jnotepadpp.localization;
+package jnotepadpp.localization;
 
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;

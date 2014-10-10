@@ -1,4 +1,4 @@
-package hr.fer.zemris.java.hw08.jnotepadpp.localization;
+package jnotepadpp.localization;
 
 /**
  * Instances of this class act as localization provider bridge. Instances are

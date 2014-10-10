@@ -1,6 +1,6 @@
-package hr.fer.zemris.java.hw08.jnotepadpp;
+package jnotepadpp;
 
-import hr.fer.zemris.java.hw08.jnotepadpp.localization.ILocalizationProvider;
+import jnotepadpp.localization.ILocalizationProvider;
 
 import java.awt.BorderLayout;
 import java.awt.Font;

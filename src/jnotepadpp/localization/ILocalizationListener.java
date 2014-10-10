@@ -1,4 +1,4 @@
-package hr.fer.zemris.java.hw08.jnotepadpp.localization;
+package jnotepadpp.localization;
 
 /**
  * Interface for localization listeners. These act as observer in observer design

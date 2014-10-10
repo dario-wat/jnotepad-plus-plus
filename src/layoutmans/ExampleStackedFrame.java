@@ -1,6 +1,6 @@
-package hr.fer.zemris.java.hw07.layoutmans;
+package layoutmans;
 
-import hr.fer.zemris.java.hw07.layoutmans.StackedLayout.StackedLayoutDirection;
+import layoutmans.StackedLayout.StackedLayoutDirection;
 
 import java.awt.GridLayout;
 import java.awt.LayoutManager2;

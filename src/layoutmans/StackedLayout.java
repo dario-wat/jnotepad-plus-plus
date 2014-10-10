@@ -1,4 +1,4 @@
-package hr.fer.zemris.java.hw07.layoutmans;
+package layoutmans;
 
 import java.awt.Component;
 import java.awt.Container;

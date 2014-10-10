@@ -1,4 +1,4 @@
-package hr.fer.zemris.java.hw08.jnotepadpp.localization;
+package jnotepadpp.localization;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -1,8 +1,8 @@
-package hr.fer.zemris.java.hw08.jnotepadpp;
+package jnotepadpp;
 
-import hr.fer.zemris.java.hw08.jnotepadpp.localization.FormLocalizationProvider;
-import hr.fer.zemris.java.hw08.jnotepadpp.localization.ILocalizationListener;
-import hr.fer.zemris.java.hw08.jnotepadpp.localization.LocalizationProvider;
+import jnotepadpp.localization.FormLocalizationProvider;
+import jnotepadpp.localization.ILocalizationListener;
+import jnotepadpp.localization.LocalizationProvider;
 
 import java.awt.BorderLayout;
 import java.awt.Component;

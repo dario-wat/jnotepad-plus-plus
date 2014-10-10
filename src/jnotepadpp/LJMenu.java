@@ -1,7 +1,7 @@
-package hr.fer.zemris.java.hw08.jnotepadpp;
+package jnotepadpp;
 
-import hr.fer.zemris.java.hw08.jnotepadpp.localization.ILocalizationListener;
-import hr.fer.zemris.java.hw08.jnotepadpp.localization.ILocalizationProvider;
+import jnotepadpp.localization.ILocalizationListener;
+import jnotepadpp.localization.ILocalizationProvider;
 
 import javax.swing.JMenu;
 
